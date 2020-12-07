@@ -2,8 +2,11 @@
 
 #include "config_private.h"
 #include "LcdAndThingspeak.h"
+#include "DataProvider.h"
+#include "FakeDataProvider.h"
 
-LcdAndThingspeak *uploader;
+LcdAndThingspeak *uploader = nullptr;
+DataProvider* provider = nullptr;
 
 void setup() {
   Serial.begin(9600);
@@ -21,9 +24,12 @@ void setup() {
   WiFiClient client;
   uploader = new LcdAndThingspeak(client);
   uploader->SetIpAddress(WiFi.localIP().toString());
+
+  provider = new FakeDataProvider();
 }
 
 void loop() {
-  uploader->UploadData(21, 115);
+  uploader->UploadData(provider->GetTemperature(),
+                       provider->GetCO2Level());
   delay(10000);
 }

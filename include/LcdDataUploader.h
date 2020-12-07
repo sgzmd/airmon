@@ -14,16 +14,15 @@ typedef U8X8_SSD1306_128X64_NONAME_SW_I2C I2CLcd;
 
 class LcdDataUploader : DataUploader {
 private:
-    I2CLcd *_lcd;
+    I2CLcd* _lcd;
     String _ip;
 public:
     LcdDataUploader();
-
     virtual ~LcdDataUploader();
 
     void UploadData(float temperature, int co2_level) override;
 
-    void SetIpAddress(const String &ip) {
+    void SetIpAddress(const String& ip) {
       _ip = ip;
     }
 };
