@@ -29,7 +29,7 @@ public:
       delete _thingspeak_uploader;
     }
 
-    void SetIpAddress(const String& ip) {
+    void SetIpAddress(const String &ip) {
       _lcd_uploader->SetIpAddress(ip);
     }
 };

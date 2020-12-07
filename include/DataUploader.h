@@ -9,7 +9,7 @@
 class DataUploader {
 public:
     DataUploader() {
-        // Nothing to be done here
+      // Nothing to be done here
     };
 
     virtual void UploadData(float temperature, int co2_level) = 0;

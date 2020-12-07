@@ -1,11 +1,9 @@
 #include <Arduino.h>
-#include <ThingSpeak.h>
-#include <U8x8lib.h>
 
 #include "config_private.h"
 #include "LcdAndThingspeak.h"
 
-LcdAndThingspeak* uploader;
+LcdAndThingspeak *uploader;
 
 void setup() {
   Serial.begin(9600);

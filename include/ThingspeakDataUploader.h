@@ -13,9 +13,10 @@ class ThingspeakDataUploader : public DataUploader {
 private:
     WiFiClient _wifiClient;
 public:
-    ThingspeakDataUploader(WiFiClient& client) : _wifiClient(client) {
+    ThingspeakDataUploader(WiFiClient &client) : _wifiClient(client) {
 
     }
+
     void UploadData(float temperature, int co2_level) override;
 };
 
