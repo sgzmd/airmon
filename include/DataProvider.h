@@ -9,6 +9,7 @@ class DataProvider {
 public:
   virtual int GetCO2Level() = 0;
   virtual float GetTemperature() = 0;
+  virtual ~DataProvider() {};
 };
 
 

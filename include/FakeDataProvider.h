@@ -11,6 +11,8 @@ class FakeDataProvider : public DataProvider {
     int GetCO2Level() override;
 
     float GetTemperature() override;
+
+    virtual ~FakeDataProvider() {}
 };
 
 
