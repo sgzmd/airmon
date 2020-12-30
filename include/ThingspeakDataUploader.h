@@ -5,17 +5,15 @@
 #ifndef AIRMON_THINGSPEAKDATAUPLOADER_H
 #define AIRMON_THINGSPEAKDATAUPLOADER_H
 
-#include "DataUploader.h"
-
 #include <WiFi.h>
 
-class ThingspeakDataUploader : public DataUploader {
+class ThingspeakDataUploader {
 private:
     WiFiClient _wifiClient;
 public:
     ThingspeakDataUploader(WiFiClient& client) : _wifiClient(client) {}
     virtual ~ThingspeakDataUploader() {}
-    void UploadData(float temperature, int co2_level) override;
+    void UploadData(float temperature, int co2_level, float humidity, int tvoc, int pressure);
 };
 
 

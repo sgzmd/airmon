@@ -1,28 +1,29 @@
 #include <Arduino.h>
+#include <ccs811.h>
+#include <Adafruit_BME680.h>
+#include <U8x8lib.h>
+#include <WString.h>
+#include <WiFi.h>
+#include <Wire.h>
 
 #include "config_private.h"
-#include "LcdAndThingspeak.h"
-#include "DataProvider.h"
-#include "FakeDataProvider.h"
+#include "ThingspeakDataUploader.h"
 
-constexpr unsigned long uS_TO_S_FACTOR = 1000000;  /* Conversion factor for micro seconds to seconds */
-constexpr unsigned short TIME_TO_SLEEP = 3;        /* Time ESP32 will go to sleep (in seconds) */
+typedef U8X8_SSD1306_128X64_NONAME_SW_I2C I2CLcd;
 
+// BME chip select pin
+constexpr unsigned int BME_CS = 5;
 
-void setup() {
-  // Chip goes to sleep and will reboot at the end of setup.
-  loop();
+Adafruit_BME680* bme = nullptr;
+CCS811* ccs811 = nullptr;
+I2CLcd* lcd = nullptr;
+ThingspeakDataUploader* uploader = nullptr;
 
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-  esp_deep_sleep_start();
-}
+String localIP = "";
 
-void loop() {
-  Serial.begin(9600);
+template<class T> void draw_data(T data, const char* format, int line);
 
-  LcdAndThingspeak *uploader = nullptr;
-  DataProvider* provider = nullptr;
-
+void connect_wifi() {
   WiFi.begin(NETWORK_SSID, NETWORK_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -33,20 +34,91 @@ void loop() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
+  localIP = WiFi.localIP().toString();
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  connect_wifi();
+
+  Wire.begin();
+
   WiFiClient client;
-  uploader = new LcdAndThingspeak(client);
-  uploader->SetIpAddress(WiFi.localIP().toString());
+  client.connect("api.thingspeak.com", 80);
 
-  provider = new FakeDataProvider();
+  lcd = new I2CLcd(
+      /* clock=*/ 15,
+      /* data=*/ 4,
+      /* reset=*/ 16);
+  lcd->setFont(u8x8_font_chroma48medium8_r);
+  lcd->begin();
 
+  bme = new Adafruit_BME680(BME_CS);
+  while (!bme->begin()) {
+    Serial.println(F("*** Unable to find BME680. Waiting 3 seconds."));
+    delay(3000);
+  }
 
-  uploader->UploadData(provider->GetTemperature(),
-                       provider->GetCO2Level());
+  bme->setTemperatureOversampling(BME680_OS_8X);
+  bme->setHumidityOversampling(BME680_OS_2X);
+  bme->setPressureOversampling(BME680_OS_4X);
+  bme->setIIRFilterSize(BME680_FILTER_SIZE_3);
+  bme->setGasHeater(320, 150); // 320*C for 150 ms
 
-  delay(1000);
+  ccs811 = new CCS811();
 
-  delete provider;
-  delete uploader;
+  // Attempt to initialize CCS811
+  while (!ccs811->begin()) {
+    Serial.println("*** Unable to find CCS811. Waiting 3 seconds.");
+    delay(3000);
+  }
 
-  Serial.end();
+  // Start measuring with CCS811
+  if (!ccs811->start(CCS811_MODE_1SEC)) {
+    Serial.println("*** Failed to start CCS811 measurement. This program will now stop.");
+    lcd->drawString(0, 0, "CCS811 failure");
+    while (true) {}
+  }
+}
+
+void loop() {
+  bme->beginReading();
+  // Doing CCS811 work while BME is still reading the data.
+
+  uint16_t eco2, etvoc, errstat, raw;
+  ccs811->read(&eco2,&etvoc,&errstat,&raw);
+  Serial.println(ccs811->errstat_str(errstat));
+
+  draw_data(eco2, "eCO2: %u", 4);
+  draw_data(etvoc, "eTVOC: %u", 5);
+
+  if (!bme->endReading()) {
+    draw_data("BME reading failed", "%s", 0);
+    return;
+  }
+
+  draw_data(bme->temperature, "Temp:\t%.1f", 0);
+  draw_data(bme->humidity, "Humid:\t%.1f", 1);
+  draw_data(bme->pressure / 100, "Press:\t%d hPa", 2);
+  draw_data(bme->gas_resistance / 1000, "Gas:\t%d", 3);
+
+  uploader->UploadData(bme->temperature, eco2, bme->humidity, etvoc, bme->pressure / 100);
+
+  if (!localIP.isEmpty()) {
+    draw_data(localIP.c_str(), "%s", 6);
+  }
+
+  delay(500);
+}
+
+template<class T> void draw_data(T data, const char* format, int line) {
+  lcd->clearLine(line);
+
+  char str[64];
+  memset(str, 0, sizeof(str));
+  sprintf(str, format, data);
+  lcd->drawString(0, line, str);
+
+  Serial.println(str);
 }
