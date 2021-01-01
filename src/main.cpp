@@ -7,21 +7,20 @@
 #include <Wire.h>
 
 #include "config_private.h"
-#include "ThingspeakDataUploader.h"
 
 typedef U8X8_SSD1306_128X64_NONAME_SW_I2C I2CLcd;
 
 // BME chip select pin
 constexpr unsigned int BME_CS = 5;
 
-Adafruit_BME680* bme = nullptr;
-CCS811* ccs811 = nullptr;
-I2CLcd* lcd = nullptr;
-ThingspeakDataUploader* uploader = nullptr;
+Adafruit_BME680 *bme = nullptr;
+CCS811 *ccs811 = nullptr;
+I2CLcd *lcd = nullptr;
 
 String localIP = "";
 
-template<class T> void draw_data(T data, const char* format, int line);
+template<class T>
+void draw_data(T data, const char *format, int line);
 
 void connect_wifi() {
   WiFi.begin(NETWORK_SSID, NETWORK_PASSWORD);
@@ -43,9 +42,6 @@ void setup() {
   connect_wifi();
 
   Wire.begin();
-
-  WiFiClient client;
-  client.connect("api.thingspeak.com", 80);
 
   lcd = new I2CLcd(
       /* clock=*/ 15,
@@ -87,7 +83,7 @@ void loop() {
   // Doing CCS811 work while BME is still reading the data.
 
   uint16_t eco2, etvoc, errstat, raw;
-  ccs811->read(&eco2,&etvoc,&errstat,&raw);
+  ccs811->read(&eco2, &etvoc, &errstat, &raw);
   Serial.println(ccs811->errstat_str(errstat));
 
   draw_data(eco2, "eCO2: %u", 4);
@@ -103,16 +99,25 @@ void loop() {
   draw_data(bme->pressure / 100, "Press:\t%d hPa", 2);
   draw_data(bme->gas_resistance / 1000, "Gas:\t%d", 3);
 
-  uploader->UploadData(bme->temperature, eco2, bme->humidity, etvoc, bme->pressure / 100);
-
   if (!localIP.isEmpty()) {
     draw_data(localIP.c_str(), "%s", 6);
   }
 
+
+  WiFiClient client;
+  client.connect(IPAddress(192, 168, 0, 220), 8000);
+  char *buf = new char[2048];
+  sprintf(buf,
+          "GET /?eCO2=%u&eTVOC=%u&temp=%f&humid=%f&press=%f&gas=%f\r\n",
+          eco2, etvoc, bme->temperature, bme->humidity, bme->pressure / 100.0, bme->gas_resistance / 1000.0);
+  client.write(buf);
+  client.flush();
+
   delay(500);
 }
 
-template<class T> void draw_data(T data, const char* format, int line) {
+template<class T>
+void draw_data(T data, const char *format, int line) {
   lcd->clearLine(line);
 
   char str[64];
