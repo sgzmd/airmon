@@ -7,6 +7,7 @@
 #include <Wire.h>
 
 #include "config_private.h"
+#include "ThingspeakDataUploader.h"
 
 typedef U8X8_SSD1306_128X64_NONAME_SW_I2C I2CLcd;
 
@@ -16,6 +17,7 @@ constexpr unsigned int BME_CS = 5;
 Adafruit_BME680 *bme = nullptr;
 CCS811 *ccs811 = nullptr;
 I2CLcd *lcd = nullptr;
+ThingspeakDataUploader* uploader = nullptr;
 
 String localIP = "";
 
@@ -76,6 +78,8 @@ void setup() {
     lcd->drawString(0, 0, "CCS811 failure");
     while (true) {}
   }
+
+  uploader = new ThingspeakDataUploader();
 }
 
 void loop() {
@@ -103,17 +107,9 @@ void loop() {
     draw_data(localIP.c_str(), "%s", 6);
   }
 
+  uploader->UploadData(bme->temperature, eco2, bme->humidity, etvoc, bme->pressure / 100);
 
-  WiFiClient client;
-  client.connect(IPAddress(192, 168, 0, 220), 8000);
-  char *buf = new char[2048];
-  sprintf(buf,
-          "GET /?eCO2=%u&eTVOC=%u&temp=%f&humid=%f&press=%f&gas=%f\r\n",
-          eco2, etvoc, bme->temperature, bme->humidity, bme->pressure / 100.0, bme->gas_resistance / 1000.0);
-  client.write(buf);
-  client.flush();
-
-  delay(500);
+  delay(2500);
 }
 
 template<class T>

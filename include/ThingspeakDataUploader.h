@@ -11,7 +11,7 @@ class ThingspeakDataUploader {
 private:
     WiFiClient _wifiClient;
 public:
-    ThingspeakDataUploader(WiFiClient& client) : _wifiClient(client) {}
+    ThingspeakDataUploader() {}
     virtual ~ThingspeakDataUploader() {}
     void UploadData(float temperature, int co2_level, float humidity, int tvoc, int pressure);
 };
