@@ -90,6 +90,11 @@ void loop() {
   ccs811->read(&eco2, &etvoc, &errstat, &raw);
   Serial.println(ccs811->errstat_str(errstat));
 
+  if (eco2 > 20000) {
+    // Not a sane value, can produce at startup.
+    return;
+  }
+
   draw_data(eco2, "eCO2: %u", 4);
   draw_data(etvoc, "eTVOC: %u", 5);
 

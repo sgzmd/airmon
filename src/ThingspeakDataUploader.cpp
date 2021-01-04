@@ -15,7 +15,7 @@ void ThingspeakDataUploader::UploadData(float temperature, int co2_level, float 
 
   char *buf = new char[2048];
   sprintf(buf,
-          "http://api.thingspeak.com/update?api_key=%s&field1=%f&field2=%dfield3=%f&field4=%d&field5=%d",
+          "http://api.thingspeak.com/update?api_key=%s&field1=%f&field2=%d&field3=%f&field4=%d&field5=%d",
           THINGSPEAK_API_KEY,
           temperature,
           co2_level,
