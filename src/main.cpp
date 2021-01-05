@@ -112,9 +112,14 @@ void loop() {
     draw_data(localIP.c_str(), "%s", 6);
   }
 
-  uploader->UploadData(bme->temperature, eco2, bme->humidity, etvoc, bme->pressure / 100);
+  uploader->UploadData(bme->temperature,
+                       eco2,
+                       bme->humidity,
+                       etvoc,
+                       bme->pressure / 100,
+                       bme->gas_resistance / 1000.0);
 
-  delay(2500);
+  delay(5000);
 }
 
 template<class T>

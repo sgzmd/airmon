@@ -13,7 +13,7 @@ private:
 public:
     ThingspeakDataUploader() {}
     virtual ~ThingspeakDataUploader() {}
-    void UploadData(float temperature, int co2_level, float humidity, int tvoc, int pressure);
+    void UploadData(float temperature, int co2_level, float humidity, int tvoc, int pressure, float gas_resistance);
 };
 
 
