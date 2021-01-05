@@ -6,18 +6,22 @@
 #include <WiFi.h>
 #include <Wire.h>
 
+#include <bsec.h>
+
 #include "config_private.h"
 #include "ThingspeakDataUploader.h"
+#include "bsec_helpers.h"
 
 typedef U8X8_SSD1306_128X64_NONAME_SW_I2C I2CLcd;
 
 // BME chip select pin
 constexpr unsigned int BME_CS = 5;
 
-Adafruit_BME680 *bme = nullptr;
 CCS811 *ccs811 = nullptr;
 I2CLcd *lcd = nullptr;
 ThingspeakDataUploader* uploader = nullptr;
+Bsec* bsec = nullptr;
+SPIClass* spi = nullptr;
 
 String localIP = "";
 
@@ -52,18 +56,6 @@ void setup() {
   lcd->setFont(u8x8_font_chroma48medium8_r);
   lcd->begin();
 
-  bme = new Adafruit_BME680(BME_CS);
-  while (!bme->begin()) {
-    Serial.println(F("*** Unable to find BME680. Waiting 3 seconds."));
-    delay(3000);
-  }
-
-  bme->setTemperatureOversampling(BME680_OS_8X);
-  bme->setHumidityOversampling(BME680_OS_2X);
-  bme->setPressureOversampling(BME680_OS_4X);
-  bme->setIIRFilterSize(BME680_FILTER_SIZE_3);
-  bme->setGasHeater(320, 150); // 320*C for 150 ms
-
   ccs811 = new CCS811();
 
   // Attempt to initialize CCS811
@@ -79,13 +71,17 @@ void setup() {
     while (true) {}
   }
 
+  // Initialising BME680 via Bsec library
+  spi = new SPIClass();
+  spi->begin();
+  bsec = new Bsec();
+  bsec->begin(BME_CS, *spi);
+  checkIaqSensorStatus(*bsec);
+
   uploader = new ThingspeakDataUploader();
 }
 
 void loop() {
-  bme->beginReading();
-  // Doing CCS811 work while BME is still reading the data.
-
   uint16_t eco2, etvoc, errstat, raw;
   ccs811->read(&eco2, &etvoc, &errstat, &raw);
   Serial.println(ccs811->errstat_str(errstat));
@@ -98,26 +94,25 @@ void loop() {
   draw_data(eco2, "eCO2: %u", 4);
   draw_data(etvoc, "eTVOC: %u", 5);
 
-  if (!bme->endReading()) {
-    draw_data("BME reading failed", "%s", 0);
-    return;
+  if (bsec->run()) {
+    Serial.printf("IAQ: %f, accuracy: %f\n", bsec->iaq, bsec->iaqAccuracy);
   }
 
-  draw_data(bme->temperature, "Temp:\t%.1f", 0);
-  draw_data(bme->humidity, "Humid:\t%.1f", 1);
-  draw_data(bme->pressure / 100, "Press:\t%d hPa", 2);
-  draw_data(bme->gas_resistance / 1000, "Gas:\t%d", 3);
+  // draw_data(bme->temperature, "Temp:\t%.1f", 0);
+  // draw_data(bme->humidity, "Humid:\t%.1f", 1);
+  // draw_data(bme->pressure / 100, "Press:\t%d hPa", 2);
+  // draw_data(bme->gas_resistance / 1000, "Gas:\t%d", 3);
 
   if (!localIP.isEmpty()) {
     draw_data(localIP.c_str(), "%s", 6);
   }
 
-  uploader->UploadData(bme->temperature,
-                       eco2,
-                       bme->humidity,
-                       etvoc,
-                       bme->pressure / 100,
-                       bme->gas_resistance / 1000.0);
+  // uploader->UploadData(bme->temperature,
+  //                      eco2,
+  //                      bme->humidity,
+  //                      etvoc,
+  //                      bme->pressure / 100,
+  //                      bme->gas_resistance / 1000.0);
 
   delay(5000);
 }
