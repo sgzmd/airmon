@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include <ccs811.h>
+#include <ArduinoJson.h>
 #include <Adafruit_BME680.h>
 #include <U8x8lib.h>
 #include <WString.h>
 #include <WiFi.h>
+#include <PubSubClient.h>
 #include <Wire.h>
 
 #include "config_private.h"
@@ -18,6 +20,8 @@ Adafruit_BME680 *bme = nullptr;
 CCS811 *ccs811 = nullptr;
 I2CLcd *lcd = nullptr;
 ThingspeakDataUploader* uploader = nullptr;
+WiFiClient *client = nullptr;
+PubSubClient *pubsub = nullptr;
 
 String localIP = "";
 
@@ -80,6 +84,13 @@ void setup() {
   }
 
   uploader = new ThingspeakDataUploader();
+
+  client = new WiFiClient();
+  pubsub = new PubSubClient(*client);
+}
+
+void check_pubsub_connected() {
+
 }
 
 void loop() {
@@ -118,6 +129,31 @@ void loop() {
                        etvoc,
                        bme->pressure / 100,
                        bme->gas_resistance / 1000.0);
+
+  WiFiClient wifi;
+  PubSubClient* client = new PubSubClient(wifi);
+  client->setServer(THINGSBOARD_HOST, 1883);
+  while (!client->connected()) {
+    client->connect("airmon", "airmon", "airmon");
+    Serial.print(".");
+  }
+  Serial.println();
+
+  char* buf = new char[1024];
+  sprintf(buf, "{temperature: %f}\n", bme->temperature);
+  bool res = client->publish("v1/devices/me/telemetry",
+                             buf);
+
+  if (!res) {
+    Serial.println("Failed to publish message");
+  } else {
+    Serial.printf("Published: %s", buf);
+  }
+
+  delete buf;
+
+  delete client;
+
 
   delay(5000);
 }
