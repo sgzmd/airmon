@@ -143,32 +143,6 @@ void loop() {
     things->loop();
   }
 
-
-//  WiFiClient wifi;
-//  PubSubClient* client = new PubSubClient(wifi);
-//  client->setServer(THINGSBOARD_HOST, 1883);
-//  while (!client->connected()) {
-//    client->connect("airmon", "airmon", "airmon");
-//    Serial.print(".");
-//  }
-//  Serial.println();
-//
-//  char* buf = new char[1024];
-//  sprintf(buf, "{temperature: %f}\n", bme->temperature);
-//  bool res = client->publish("v1/devices/me/telemetry",
-//                             buf);
-//
-//  if (!res) {
-//    Serial.println("Failed to publish message");
-//  } else {
-//    Serial.printf("Published: %s", buf);
-//  }
-//
-//  delete buf;
-//
-//  delete client;
-
-
   delay(5000);
 }
 
