@@ -5,6 +5,7 @@
 #include <WString.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include <ThingsBoard.h>
 
 #include "config_private.h"
 #include "ThingspeakDataUploader.h"
@@ -18,6 +19,7 @@ Adafruit_BME680 *bme = nullptr;
 CCS811 *ccs811 = nullptr;
 I2CLcd *lcd = nullptr;
 ThingspeakDataUploader* uploader = nullptr;
+ThingsBoard* things;
 
 String localIP = "";
 
@@ -80,6 +82,9 @@ void setup() {
   }
 
   uploader = new ThingspeakDataUploader();
+
+  WiFiClient* wiFiClient = new WiFiClient();
+  things = new ThingsBoard(*wiFiClient);
 }
 
 void loop() {
@@ -118,6 +123,25 @@ void loop() {
                        etvoc,
                        bme->pressure / 100,
                        bme->gas_resistance / 1000.0);
+
+  if (!things->connected()) {
+    if (!things->connect(THINGSBOARD_HOST, THINGSBOARD_TOKEN, 1883)) {
+      Serial.printf("Thingboard down, cannot connect to %s with token %s\n",
+                    THINGSBOARD_HOST,
+                    THINGSBOARD_TOKEN);
+    }
+  }
+
+  if (things->connected()) {
+    things->sendTelemetryFloat("temperature", bme->temperature);
+    things->sendTelemetryInt("eco2", eco2);
+    things->sendTelemetryFloat("humidity", bme->humidity);
+    things->sendTelemetryInt("etvoc", etvoc);
+    things->sendTelemetryFloat("pressure", bme->pressure / 100.0);
+    things->sendTelemetryFloat("gas_resistance", bme->gas_resistance / 1000.0);
+
+    things->loop();
+  }
 
   delay(5000);
 }
