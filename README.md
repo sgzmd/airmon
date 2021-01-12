@@ -38,6 +38,30 @@ When everything is wired together and working, here's what I see in ThingsBoard:
 
 ## Electronics
 
+The whole setup consists of just a few components:
+
+1. ESP32 MCU - I've used [Heltec WiFi Kit
+   32](https://heltec.org/project/wifi-kit-32/) purely because this was the one
+   I had handy - and the fact that it comes with a built-in LCD which is handy
+   for quick debugging.
+2. [CCS811](https://www.sciosense.com/products/environmental-sensors/ccs811-gas-sensor-solution/)
+   sensor - I've used [CJMCU-811](https://revspace.nl/CJMCU-811) variation of
+   it, because they are  few dimes a dozen on Aliexpress. There's more expensive
+   variant from Adafruit, but it was out of stock at the moment. Admittedly this
+   is not the best CO2 sensor, but you get what you pay for - this sensors
+   measures eCO2 or Effective CO2, i.e. it doesn't measure CO2 directly but
+   instead measures other gas characteristics highly correlated with CO2. True
+   Co2 sensors are generally far more expensive, in the order of £60+.
+3. [Bosch
+   BME680](https://www.bosch-sensortec.com/products/environmental-sensors/gas-sensors-bme680/)
+   --  great little sensor that provides temperature, humidity and air pressure,
+   something that is not supported in CCS811.
+4. 2x4.7 KOhm resistors used as pull-ups for I2C lines of the ESP32.
+   
+Here's the entire circuit:
+
+![Circuit](img/schema.png)
+
 > Write up electronics part
 
 ## Software
