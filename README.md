@@ -5,7 +5,7 @@
 What I am planning to document:
 - [x] Write an overview with some photographs of what was done
 - [x] Describe the electronic part of the project
-- [ ] Describe the client-side software part of the project
+- [x] Describe the client-side software part of the project
 - [ ] Describe configuring ThingsBoard and wiring it together
 - [ ] Write about all the interesting gotchas.
 
@@ -70,4 +70,34 @@ them, no matter what.
 
 ## Software
 
-> Write up software part
+For the software part I had a number of options:
+- I could use [Espressif
+  toolkit](https://www.espressif.com/en/products/software/esp-sdk/overview)
+  which is a cross-compiler toolchain based on GCC. This means I could use
+  regular CMake toolkit and any C++ IDE capable of supporting cross-compiler
+  would work (VSCode/Clion etc).
+- Easier alternative would've been using Arduino IDE with ESP32 board definition
+  -- this way I am using well-known and familiar Arduino framework
+  (`setup()`/`loop()`/`digitalWrite(...)` and so on). I really liked that
+  option because of simplicity and ridiculous amount of libraries available,
+  but I really disliked Arduino IDE.
+
+Then I learned about [PlatformIO](https://platformio.org/). PlatformIO is, in my
+opinion, an astonishing framework that allows one to write code using their
+toolkit, which integrates nicely into VSCode or CLion, for any board they
+support, using either native framework for that board (esp-idf for ESP32) or,
+you guessed it right, Arduino framework. This was a no brainer.
+
+Specifically, for this project it means that once you have PlatformIO installed
+and configured you simply do:
+
+```
+$ . ~/.platformio/penv/bin/activate
+(penv) $ pio run 
+```
+
+And it automatically downloads the correct toolchain for the board you are
+compiling for, downloads all the libraries it needs, and finally compiles and
+links your final `elf` file. Cool, isn't it?
+
+You would _probably_ want to familiarise yourself first with PlatformIO - start [here](https://docs.platformio.org/en/latest/what-is-platformio.html).
