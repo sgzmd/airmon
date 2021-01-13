@@ -10,8 +10,9 @@ Make sure you add a file named `config_private.h` to this directory which looks 
 
 constexpr char NETWORK_SSID[] = "<YOUR SSID>";
 constexpr char NETWORK_PASSWORD[] = "<YOUR SSID PASSWORD>";
-constexpr char THINGSPEAK_API_KEY[] = "<API KEY>";
-constexpr unsigned long THINGSPEAK_CHANNEL_ID = <CHANNEL_ID>;
+
+constexpr char THINGSBOARD_HOST[] = "<host of thingsboard>>";
+constexpr char THINGSBOARD_TOKEN[] = "<thingsboard device token>";
 
 #endif // CONFIG_PRIVATE_H
 ```
