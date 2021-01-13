@@ -1,15 +1,17 @@
+#include <Adafruit_BME680.h>
 #include <Arduino.h>
 #include <ccs811.h>
-#include <Adafruit_BME680.h>
+#include <ThingsBoard.h>
 #include <U8x8lib.h>
 #include <WiFi.h>
-#include <ThingsBoard.h>
 
 #include "config_private.h"
 
+// The type name is a bit of a mouthful - let's rename it to something
+// more easily comprehensible.
 typedef U8X8_SSD1306_128X64_NONAME_SW_I2C I2CLcd;
 
-// BME chip select pin.
+// BME680 chip select pin.
 constexpr unsigned int BME_CS = 5;
 // Using hardware SPI.
 Adafruit_BME680 bme(BME_CS);
@@ -18,6 +20,7 @@ Adafruit_BME680 bme(BME_CS);
 constexpr uint16_t MQTT_PORT = 1883;
 
 CCS811 ccs811;
+
 I2CLcd lcd(
     /* clock=*/ 15,
     /* data=*/ 4,
@@ -29,7 +32,8 @@ ThingsBoard things(client);
 String localIP = "";
 
 /**
- * Draws a line on LCD, forward declaration.
+ * Draws a line on LCD (forward declaration).
+ * 
  * @tparam T type of the data to be used
  * @param data data to display
  * @param format format string to use
@@ -40,10 +44,14 @@ void draw_data(T data, const char *format, int line);
 
 /**
  * Connects to WiFi network predefined in config_private.h
+ * (forward declaration).
  */
 void connect_wifi();
 
-
+/**
+ * Configures Serial, connects WiFi, sets up LCD and starts up BME680
+ * and CCS811 sensors.
+ */
 void setup() {
   Serial.begin(115200);
 
@@ -81,6 +89,9 @@ void setup() {
   }
 }
 
+/**
+ * Where all the actual work happens.
+ */
 void loop() {
   // Doing CCS811 work while BME is still reading the data.
   bme.beginReading();
