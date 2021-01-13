@@ -4,7 +4,7 @@
 
 What I am planning to document:
 - [x] Write an overview with some photographs of what was done
-- [ ] Describe the electronic part of the project
+- [x] Describe the electronic part of the project
 - [ ] Describe the client-side software part of the project
 - [ ] Describe configuring ThingsBoard and wiring it together
 - [ ] Write about all the interesting gotchas.
@@ -62,7 +62,11 @@ Here's the entire circuit:
 
 ![Circuit](img/schema.png)
 
-> Write up electronics part
+Note the use of pull-ups: it took me a long time to understand why on this
+specific ESP32 I2C refuses to find the device without pullups, whereas on others
+(most notably WROOM32-based boards) everything just works. Turns out, ESP32 has
+only very weak pull-ups according to the standard, and one should always use
+them, no matter what. 
 
 ## Software
 
